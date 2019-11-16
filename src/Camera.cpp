@@ -7,8 +7,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-Camera::Camera(int screenWidth, int screenHeight): Camera(Vector3f(0., 0., 1.5),
-        Vector3f(0., 0., -5.0), screenWidth, screenHeight) {
+Camera::Camera(int screenWidth, int screenHeight): Camera(Vector3f(0., 0., 5),
+        Vector3f(0., 0., 0.0), screenWidth, screenHeight) {
 
 }
 
@@ -21,10 +21,10 @@ Camera::Camera(const Vector3f& eye, const Vector3f& lookAt, int screenWidth, int
 //                    0.,   0.,   1,    0.0,
 //                    0.,   0.,   0.,   1.;
 //    translateBy(position);
-        float theta = (3.14/180) * 120;
+        float theta = (3.14/180) * 60;
 
     // near and far are hardcoded
-        float n = -0.1;
+        float n = -0.5;
         float f = -100.0;
     // right and left
         float r;
@@ -44,7 +44,7 @@ Camera::Camera(const Vector3f& eye, const Vector3f& lookAt, int screenWidth, int
         r = aspect * t;
         l = -r;
 
-        // Apply projection matrix to corner points
+
         Eigen::Matrix4f orthographic(4,4);
         Eigen::Matrix4f perspective(4,4);
         orthographic <<
@@ -56,16 +56,16 @@ Camera::Camera(const Vector3f& eye, const Vector3f& lookAt, int screenWidth, int
         // perspective maps a frustrum to a unit cube
         // take  vertex from each end of the frustrum and map them to the unit cube
         perspective <<
-                2*abs(n)/(r-l), 0., (r+l)/(r-l), 0.,
-                0., (2 * abs(n))/(t-b), (t+b)/(t-b), 0.,
-                0., 0.,  (abs(f) + abs(n))/(abs(n) - abs(f)), (2 * abs(f) * abs(n))/(abs(n) - abs(f)),
-                0., 0., -1., 0;
+                    2*abs(n)/(r-l), 0., (r+l)/(r-l), 0.,
+                    0., (2 * abs(n))/(t-b), (t+b)/(t-b), 0.,
+                    0., 0.,  (abs(f) + abs(n))/(abs(n) - abs(f)), (2 * abs(f) * abs(n))/(abs(n) - abs(f)),
+                    0., 0., -1., 0;
 
 //        if(ortho){
 //         this->projection = orthographic;
 //        }else{
          this->projection = perspective;
-//        }
+//        }ppll
         cout<<"l: "<<l<<", r:"<<r<<", t: "<<t<<", b:"<<b<<", n: "<<n<<", f:"<<f<<endl;
 //        glm::mat4 projectionGlm = glm::ortho(l, r, b, t, n, f);
 //        glm::mat4 projectionGlm = glm::perspective(glm::radians(45.0f), aspect, n, f);
@@ -83,7 +83,7 @@ Camera::Camera(const Vector3f& eye, const Vector3f& lookAt, int screenWidth, int
 void Camera::translateBy(const Eigen::Vector3f &position) {
 //    this->view = Utils::generateTranslationMatrix(-1 * position) * this->view;
     this->eye += position;
-//    cout<<this->eye<<endl;
+    cout<<this->eye(2)<<endl;
 //    cout<<this->getView()<<endl;
 //    this->lookAt -= position;
 }
@@ -115,17 +115,7 @@ MatrixXf Camera::getView() {
             0.0, 0.0, 0.0, 1.0;
 
     return (rotate * translate);
-//    glm::mat4 viewGlm = glm::lookAt(glm::vec3(eye(0), eye(1), eye(2)),
-//                        glm::vec3(lookAt(0), lookAt(1), lookAt(2)),
-//                        glm::vec3(0.0f, 1.0f, 0.0f));
-//    MatrixXf view( 4, 4);
-//    view <<
-//        viewGlm[0][0], viewGlm[0][1], viewGlm[0][2], viewGlm[0][3],
-//        viewGlm[1][0], viewGlm[1][1], viewGlm[1][2], viewGlm[1][3],
-//        viewGlm[2][0], viewGlm[2][1], viewGlm[2][2], viewGlm[2][3],
-//        viewGlm[3][0], viewGlm[3][1], viewGlm[3][2], viewGlm[3][3];
-//
-//    return view.transpose();
+
 }
 
 MatrixXf Camera::getProjection() {

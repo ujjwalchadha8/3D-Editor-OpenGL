@@ -39,6 +39,9 @@ public:
     void translate(const Vector3f& translateBy);
     void scale(float factor);
     void rotate(int axis, float radians);
+
+    void scaleToUnitCube();
+
     Vector3f getTranslation();
 
     MatrixXf getVertices();

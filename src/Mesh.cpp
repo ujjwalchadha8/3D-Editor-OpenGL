@@ -78,13 +78,11 @@ Mesh Mesh::fromOffFile(const string& filepath, const Vector3f& color, const Rend
         for (long i = 0; i < vertices.cols(); i++) {
             vertices.col(i) << vertices.col(i) - baryCenter;
         }
-
         return Mesh(vertices, faces, color, renderType);
     }
 }
 
 Vector3f Mesh::calculateBarycenter(const MatrixXf &faces, const MatrixXf &vertices) {
-    float areaSum = 0.;
     Vector3f centroid(0., 0., 0.);
     for (long faceNumber = 0; faceNumber < faces.cols(); faceNumber++) {
         const Vector3f& a = vertices.col(faces(0, faceNumber));
@@ -92,12 +90,8 @@ Vector3f Mesh::calculateBarycenter(const MatrixXf &faces, const MatrixXf &vertic
         const Vector3f& c = vertices.col(faces(2, faceNumber));
 
         const Vector3f& center = (a + b + c) / 3;
-//        float area = 0.5f * ((b - a).cross(c - a)).norm();
-//        centroid += area * center;
-//        areaSum = area;
         centroid = centroid + center;
     }
-//    return centroid / areaSum;
     return centroid / faces.cols();
 }
 
@@ -155,6 +149,34 @@ MatrixXf Mesh::calculateVertexNormals(const MatrixXf& faces, const MatrixXf& ver
         }
     }
     return normals;
+}
+
+void Mesh::scaleToUnitCube() {
+    float xmax = -999999, xmin = 99999;
+    float ymax = -999999, ymin = 99999;
+    float zmax = -999999, zmin = 99999;
+    for (long i = 0; i < getVertices().cols(); i++) {
+        Vector3f vertex = getVertices().col(i);
+        if (vertex(0) < xmin) {
+            xmin = vertex(0);
+        }
+        if (vertex(0) > xmax) {
+            xmax = vertex(0);
+        }
+        if (vertex(1) < ymin) {
+            ymin = vertex(1);
+        }
+        if (vertex(1) > ymax) {
+            ymax = vertex(1);
+        }
+        if (vertex(2) < zmin) {
+            zmin = vertex(2);
+        }
+        if (vertex(2) > zmax) {
+            zmax = vertex(2);
+        }
+    }
+    scale(1 / max(max(xmax-xmin, ymax-ymin), zmax-zmin));
 }
 
 RenderType Mesh::getRenderType() {

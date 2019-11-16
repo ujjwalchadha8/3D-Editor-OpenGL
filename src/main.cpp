@@ -241,20 +241,21 @@ int main()
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 
-    Mesh bumpyMesh = Mesh::fromOffFile("../data/bumpy_cube.off", Vector3f(1.0, 0.0, 0.0), WIREFRAME);
-    world.addMesh(bumpyMesh);
-    bumpyMesh.scale(0.05);
-    bumpyMesh.rotate(Utils::AXIS_Z, 0.4);
-    bumpyMesh.translate(Eigen::Vector3f(0.0, 0.0, -2));
+//    Mesh bumpyMesh = Mesh::fromOffFile("../data/bumpy_cube.off", Vector3f(1.0, 0.0, 0.0), FLAT_SHADE);
+//    world.addMesh(bumpyMesh);
+////    bumpyMesh.scale(0.1);
+//    bumpyMesh.scaleToUnitCube();
+//    bumpyMesh.translate(Eigen::Vector3f(0.0, 0.0, -1));
 
 //    Mesh bunnyMesh = Mesh::fromOffFile("../data/bunny.off", Vector3f(0.0, 1.0, 0.0), FLAT_SHADE);
-//    bunnyMesh.translate(Eigen::Vector3f(-0.3, -0.1, -5));
-//    bunnyMesh.scale(4);
+//    bunnyMesh.scaleToUnitCube();
 //    world.addMesh(bunnyMesh);
 
-//    Mesh unitCube = Mesh::fromOffFile("../data/unit_cube.off", Vector3f(1., 1., 0.), FLAT_SHADE);
-//    world.addMesh(unitCube);
-//    unitCube.scale(0.1);
+    Mesh unitCube = Mesh::fromOffFile("../data/unit_cube.off", Vector3f(1., 1., 0.), FLAT_SHADE);
+    world.addMesh(unitCube);
+//    unitCube.scale(1);
+    unitCube.scaleToUnitCube();
+    unitCube.translate(Eigen::Vector3f(0.0, 0.0, 0.0));
 
     int screenWidth, screenHeight;
     glfwGetWindowSize(window, &screenWidth, &screenHeight);
@@ -296,10 +297,16 @@ int main()
             glPolygonMode(GL_FRONT_AND_BACK, getPolygonDrawType(mesh.getRenderType()));
             glUniform3f(program.uniform("color"), mesh.getColor()(0), mesh.getColor()(1), mesh.getColor()(2));
             glUniform1i(program.uniform("flat_normal"), false);
-            glUniform3f(program.uniform("lightPos"), -1.0, 0.0, -1.0);
+            glUniform3f(program.uniform("lightPos"), -5.0, 0.0, 10.0);
             glUniform3f(program.uniform("viewPos"), camera.getEye()(0), camera.getEye()(1), camera.getEye()(2));
 
             glDrawArrays(GL_TRIANGLES, 0, mesh.getFaces().cols() * mesh.getFaces().rows());
+
+
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glUniform3f(program.uniform("color"), 0.0, 0.0, 0.0);
+            glDrawArrays(GL_TRIANGLES, 0, mesh.getFaces().cols() * mesh.getFaces().rows());
+
         }
 
         // Swap front and back buffers
