@@ -155,7 +155,7 @@ MatrixXf Mesh::calculateVertexNormals(const MatrixXf& faces, const MatrixXf& ver
     return normals;
 }
 
-float Mesh::getMaxDistanceFromCenter() {
+void Mesh::scaleToUnitCube() {
     float xmax = -999999, xmin = 99999;
     float ymax = -999999, ymin = 99999;
     float zmax = -999999, zmin = 99999;
@@ -180,11 +180,7 @@ float Mesh::getMaxDistanceFromCenter() {
             zmax = vertex(2);
         }
     }
-    return max(max(xmax-xmin, ymax-ymin), zmax-zmin);
-}
-
-void Mesh::scaleToUnitCube() {
-    scale(1 / getMaxDistanceFromCenter());
+    scale(1 / max(max(xmax-xmin, ymax-ymin), zmax-zmin));
 }
 
 RenderType Mesh::getRenderType() {

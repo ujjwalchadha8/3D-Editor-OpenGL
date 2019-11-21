@@ -19,7 +19,7 @@ public:
     static Eigen::MatrixXf generateRotateAboutPointMatrix(int axis, float radians, const Eigen::Vector3f& center);
     static bool rayTriangleIntersect(
             const Eigen::Vector3f &orig, const Eigen::Vector3f &dir,
-            const Eigen::Vector3f &v0, const Eigen::Vector3f &v1, const Eigen::Vector3f &v2);
+            const Eigen::Vector3f &v0, const Eigen::Vector3f &v1, const Eigen::Vector3f &v2, float& t);
 };
 
 enum RenderType {

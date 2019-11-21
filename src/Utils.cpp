@@ -73,7 +73,7 @@ Eigen::MatrixXf Utils::generateScaleAboutPointMatrix(const Eigen::Vector3f& poin
 }
 
 bool Utils::rayTriangleIntersect(const Eigen::Vector3f &rayOrigin, const Eigen::Vector3f &rayVector, const Eigen::Vector3f &vertex0,
-                                 const Eigen::Vector3f &vertex1, const Eigen::Vector3f &vertex2) {
+                                 const Eigen::Vector3f &vertex1, const Eigen::Vector3f &vertex2, float& t) {
     const float EPSILON = 0.00001;
 
     Eigen::Vector3f edge1, edge2, h, s, q;
@@ -95,7 +95,7 @@ bool Utils::rayTriangleIntersect(const Eigen::Vector3f &rayOrigin, const Eigen::
     if (v < 0.0 || u + v > 1.0)
         return false;
     // At this stage we can compute t to find out where the intersection point is on the line.
-    float t = f * edge2.dot(q);
+    t = f * edge2.dot(q);
     if (t > EPSILON && t < 1/EPSILON) // ray intersection
     {
 //        outIntersectionPoint = rayOrigin + rayVector * t;

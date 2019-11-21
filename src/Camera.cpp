@@ -78,6 +78,15 @@ void Camera::translateBy(const Eigen::Vector3f &position) {
     this->cameraPosition += position;
 }
 
+void Camera::translateByAngle(float angleForYAxis, float angleForXAxis) {
+    Vector3f upVector(0., 1., 0.);
+    Vector3f cameraDirection = (cameraPosition - cameraTarget).normalized();
+    Vector3f cameraRight = (upVector.cross(cameraDirection).normalized());
+    Vector3f cameraUp = cameraDirection.cross(cameraRight);
+
+
+}
+
 MatrixXf Camera::getView() {
     Vector3f upVector(0., 1., 0.);
     Vector3f cameraDirection = (cameraPosition - cameraTarget).normalized();
@@ -119,8 +128,6 @@ MatrixXf Camera::getProjection() {
 
     r = aspect * t;
     l = -r;
-
-//    cout<<"l: "<<l<<", r:"<<r<<", t: "<<t<<", b:"<<b<<", n: "<<n<<", f:"<<f<<endl;
 
     if (this->projectionType == PROJECTION_ORTHOGRAPHIC) {
         Eigen::Matrix4f orthographic(4, 4);

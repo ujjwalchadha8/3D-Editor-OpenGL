@@ -72,7 +72,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         rayOrigin = worldPoint;
         rayDirection = (worldPoint - worldPoint2).normalized();
 
-        int meshIntersected = -1;
+        int closestMeshIntersectedIndex = -1;
+        float closestMeshDistance = 999999.0;
         for (int meshNo = 0; meshNo < world.getMeshes().size(); meshNo++) {
             Mesh mesh = world.getMeshes().at(meshNo).get();
             MatrixXf model = mesh.getModel();
@@ -85,15 +86,16 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
                 Vector3f a = Vector3f(a4(0), a4(1), a4(2));
                 Vector3f b = Vector3f(b4(0), b4(1), b4(2));
                 Vector3f c = Vector3f(c4(0), c4(1), c4(2));
-
-                if (Utils::rayTriangleIntersect(rayOrigin, rayDirection, a, b, c)) {
-                    meshIntersected = meshNo;
-                    break;
+                float t = -1;
+                if (Utils::rayTriangleIntersect(rayOrigin, rayDirection, a, b, c, t)) {
+                    if (t < closestMeshDistance) {
+                        closestMeshDistance = t;
+                        closestMeshIntersectedIndex = meshNo;
+                    }
                 }
             }
         }
-        cout << meshIntersected << endl;
-        world.setSelectedMeshIndex(meshIntersected);
+        world.setSelectedMeshIndex(closestMeshIntersectedIndex);
     }
 }
 
@@ -114,20 +116,21 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             if (action == GLFW_PRESS) {
                 meshes[meshArrayTop] = Mesh::fromOffFile("../data/bunny.off", Vector3f(0.0, 1.0, 0.0), FLAT_SHADE);
                 meshes[meshArrayTop].scaleToUnitCube();
-                meshes[meshArrayTop].translate(Vector3f(0.0, 0.0, 0.0));
+                meshes[meshArrayTop].translate(Vector3f(-0.072, -0.1, 0.0));
                 world.addMesh(meshes[meshArrayTop]);
                 meshArrayTop++;
             }
             break;
         case GLFW_KEY_3:
             if (action == GLFW_PRESS) {
-                meshes[meshArrayTop] = Mesh::fromOffFile("../data/bumpy_cube.off", Vector3f(1.0, 0.0, 0.0), WIREFRAME);
+                meshes[meshArrayTop] = Mesh::fromOffFile("../data/bumpy_cube.off", Vector3f(1.0, 0.0, 0.0), FLAT_SHADE);
                 meshes[meshArrayTop].scaleToUnitCube();
                 meshes[meshArrayTop].translate(Vector3f(0.0, 0.0, 0.0));
                 world.addMesh(meshes[meshArrayTop]);
                 meshArrayTop++;
             }
             break;
+
         case GLFW_KEY_UP:
             camera.translateBy(Vector3f(0.0, 0.5, 0.));
             break;
@@ -239,74 +242,23 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
                 world.getMeshes().at(world.getSelectedMeshIndex()).get().rotate(Utils::AXIS_Y, 0.1);
             }
             break;
-    }
-}
-
-
-void key_callback2(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    Mesh& selectedMesh = world.getMeshes().at(world.getSelectedMeshIndex());
-    Camera& camera = world.getViewCamera();
-    switch (key)
-    {
-        case GLFW_KEY_1:
-            if (action == GLFW_PRESS) {
-                Mesh unitCube = Mesh::fromOffFile("../data/unit_cube.off", Vector3f(1., 1., 0.), FLAT_SHADE);
-                cout<<"Adding"<<endl;
-                world.addMesh(unitCube);
-                cout<<"Adding"<<endl;
-                unitCube.scaleToUnitCube();
-                cout<<"Adding"<<endl;
-                break;
-            }
-        case GLFW_KEY_2:
-            if (action == GLFW_PRESS) {
-                Mesh unitCube = Mesh::fromOffFile("../data/bumpy_cube.off", Vector3f(1., 1., 0.), FLAT_SHADE);
-                world.addMesh(unitCube);
-                unitCube.scaleToUnitCube();
-                break;
-            }
-        case GLFW_KEY_3:
-            if (action == GLFW_PRESS) {
-                Mesh unitCube = Mesh::fromOffFile("../data/bunny.off", Vector3f(1., 1., 0.), FLAT_SHADE);
-                world.addMesh(unitCube);
-                unitCube.scaleToUnitCube();
-                break;
-            }
-
-        case  GLFW_KEY_A:
-            if (action == GLFW_PRESS) selectedMesh.scale(2);
-            break;
-        case GLFW_KEY_4:
-            selectedMesh.rotate(Utils::AXIS_Z, 0.1);
-            break;
-        case  GLFW_KEY_5:
-            selectedMesh.rotate(Utils::AXIS_X, 0.1);
-            break;
-        case  GLFW_KEY_Q:
-            if (action == GLFW_PRESS) selectedMesh.translate(Vector3f(0.2, 0, 0.0));
-            break;
-        case  GLFW_KEY_W:
-            if (action == GLFW_PRESS) selectedMesh.scale(0.8);
-            break;
-
         case  GLFW_KEY_P:
-            camera.translateBy(Vector3f(0.0, 0.0, -0.5));
+            if (action == GLFW_PRESS) {
+                if (world.getSelectedMeshIndex() == -1) return;
+                world.getMeshes().at(world.getSelectedMeshIndex()).get().scale(1.1);
+            }
             break;
         case  GLFW_KEY_L:
-            camera.translateBy(Vector3f(0.0, 0.0, 0.5));
-            break;
-
-
-
-        default:
+            if (action == GLFW_PRESS) {
+                if (world.getSelectedMeshIndex() == -1) return;
+                world.getMeshes().at(world.getSelectedMeshIndex()).get().scale(1/1.1);
+            }
             break;
     }
-//    std::cout<<world.getViewCamera().getView()<<std::endl;
 }
 
 void window_size_callback(GLFWwindow* window, int width, int height) {
-    float aspect = width / height;
-    world.getViewCamera().setAspectRatio(aspect);
+    world.getViewCamera().setAspectRatio((float)width / (float)height);
 }
 
 GLenum getPolygonDrawType(RenderType renderType) {
@@ -321,8 +273,6 @@ GLenum getPolygonDrawType(RenderType renderType) {
             throw runtime_error("Unsupported type");
     }
 }
-
-Mesh bunnyMesh2 = Mesh::fromOffFile("../data/unit_cube.off", Vector3f(1., 1., 0.), FLAT_SHADE);
 
 int main()
 {
@@ -446,31 +396,10 @@ int main()
 
     glfwSetWindowSizeCallback(window, window_size_callback);
 
-//    Mesh bumpyMesh = Mesh::fromOffFile("../data/bumpy_cube.off", Vector3f(1.0, 0.0, 0.0), FLAT_SHADE);
-//    world.addMesh(bumpyMesh);
-////    bumpyMesh.scale(0.1);
-//    bumpyMesh.scaleToUnitCube();
-//    bumpyMesh.translate(Eigen::Vector3f(0.0, 0.0, -1));
-//
-//    Mesh bunnyMesh = Mesh::fromOffFile("../data/bunny.off", Vector3f(0.0, 1.0, 0.0), FLAT_SHADE);
-//    bunnyMesh.scaleToUnitCube();
-//    bunnyMesh.translate(Vector3f(2.0, 2.0, 0.0));
-//    world.addMesh(bunnyMesh);
-//
-//    Mesh unitCube = Mesh::fromOffFile("../data/unit_cube.off", Vector3f(1., 1., 0.), FLAT_SHADE);
-//    world.addMesh(unitCube);
-//    unitCube.scaleToUnitCube();
-//    unitCube.translate(Eigen::Vector3f(0.0, 0.0, 0.0));
-
-//    Mesh bunnyMesh = Mesh::fromOffFile("../data/triangle.off", Vector3f(0.0, 1.0, 0.0), FLAT_SHADE);
-//    bunnyMesh.scaleToUnitCube();
-//    bunnyMesh.translate(Vector3f(2.0, 2.0, 0.0));
-//    world.addMesh(bunnyMesh);
-
     int screenWidth, screenHeight;
     glfwGetWindowSize(window, &screenWidth, &screenHeight);
     Camera camera(Vector3f(0., 0., 3.), Vector3f(0., 0., 0.),
-            Camera::PROJECTION_PERSPECTIVE, screenWidth/screenHeight, -0.5, -100.0, (3.14/180) * 90);
+            Camera::PROJECTION_PERSPECTIVE, (float)screenWidth / (float)screenHeight, -0.5, -100.0, (3.14/180) * 90);
     world.addCamera(camera);
 
     // Loop until the user closes the window
@@ -496,6 +425,7 @@ int main()
         glUniformMatrix4fv(program.uniform("view"), 1, GL_FALSE, world.getViewCamera().getView().data());
         glUniformMatrix4fv(program.uniform("projection"), 1, GL_FALSE, world.getViewCamera().getProjection().data());
         // Draw each mesh
+
         for (int meshIndex = 0; meshIndex < world.getMeshes().size(); meshIndex++) {
             Mesh mesh = world.getMeshes().at(meshIndex).get();
             VBO_Positions.update(mesh.getTriangleVertices());
