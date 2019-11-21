@@ -53,7 +53,8 @@ public:
     MatrixXf getProjection();
 
     void translateBy(const Eigen::Vector3f& position);
-    void translateByAngle(float angleForYAxis, float angleForXAxis);
+    void translateByAngleOnYAxis(float angle);
+    void translateByAngleOnXAxis(float angle);
 };
 
 

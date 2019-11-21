@@ -37,6 +37,8 @@ Vector3f rayDirection(0.0, 0.0, 0.0);
 Mesh meshes[100] = {Mesh()};
 int meshArrayTop = 0;
 
+bool isCameraMovingInCartesianCoords = false;
+
 Vector3f screenCoordsToWorldCoords(GLFWwindow* window, Vector3d screenCoords) {
     // Get the size of the window
     int width, height;
@@ -131,17 +133,39 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             }
             break;
 
+        case GLFW_KEY_LEFT_ALT:
+            if (action == GLFW_PRESS) {
+                isCameraMovingInCartesianCoords = !isCameraMovingInCartesianCoords;
+                cout << "Alt pressed: " << isCameraMovingInCartesianCoords << endl;
+            }
+            break;
         case GLFW_KEY_UP:
-            camera.translateBy(Vector3f(0.0, 0.5, 0.));
+            if (isCameraMovingInCartesianCoords) {
+                camera.translateBy(Vector3f(0.0, 0.5, 0.));
+            } else {
+                camera.translateByAngleOnXAxis(0.1);
+            }
             break;
         case GLFW_KEY_DOWN:
-            camera.translateBy(Vector3f(0.0, -0.5, 0.));
+            if (isCameraMovingInCartesianCoords) {
+                camera.translateBy(Vector3f(0.0, -0.5, 0.));
+            } else {
+                camera.translateByAngleOnXAxis(-0.1);
+            }
             break;
         case GLFW_KEY_LEFT:
-            camera.translateBy(Vector3f(-0.5, 0.0, 0.));
+            if (isCameraMovingInCartesianCoords) {
+                camera.translateBy(Vector3f(-0.5, 0.0, 0.0));
+            } else {
+                camera.translateByAngleOnYAxis(-0.1);
+            }
             break;
         case GLFW_KEY_RIGHT:
-            camera.translateBy(Vector3f(0.5, 0.0, 0.0));
+            if (isCameraMovingInCartesianCoords) {
+                camera.translateBy(Vector3f(0.5, 0.0, 0.0));
+            } else {
+                camera.translateByAngleOnYAxis(0.1);
+            }
             break;
         case GLFW_KEY_RIGHT_BRACKET:
             camera.translateBy(Vector3f(0.0, 0.0, -0.1));

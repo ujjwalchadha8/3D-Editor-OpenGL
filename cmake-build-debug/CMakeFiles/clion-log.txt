@@ -1,0 +1,19 @@
+/Applications/CLion.app/Contents/bin/cmake/mac/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /Users/ujjwalchadha/CLionProjects/untitled
+CMake Warning (dev) at CMakeLists.txt:2 (project):
+  Policy CMP0048 is not set: project() command manages VERSION variables.
+  Run "cmake --help-policy CMP0048" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+
+  The following variable(s) would be set to empty:
+
+    CMAKE_PROJECT_VERSION
+    CMAKE_PROJECT_VERSION_MAJOR
+    CMAKE_PROJECT_VERSION_MINOR
+    CMAKE_PROJECT_VERSION_PATCH
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- WARNING: you are using the obsolete 'GLU' package, please use 'OpenGL' instead
+-- Using Cocoa for window creation
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /Users/ujjwalchadha/CLionProjects/untitled/cmake-build-debug

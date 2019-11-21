@@ -33,8 +33,8 @@ B << A, A, A;     // B is three horizontally stacked A's.
 A.fill(10);       // Fill A with all 10's.
 
 // Eigen                                    // Matlab
-MatrixXd::Identity(rows,cols)               // eye(rows,cols)
-C.setIdentity(rows,cols)                    // C = eye(rows,cols)
+MatrixXd::Identity(rows,cols)               // cameraPosition(rows,cols)
+C.setIdentity(rows,cols)                    // C = cameraPosition(rows,cols)
 MatrixXd::Zero(rows,cols)                   // zeros(rows,cols)
 C.setZero(rows,cols)                        // C = zeros(rows,cols)
 MatrixXd::Ones(rows,cols)                   // ones(rows,cols)

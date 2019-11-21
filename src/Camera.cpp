@@ -78,13 +78,46 @@ void Camera::translateBy(const Eigen::Vector3f &position) {
     this->cameraPosition += position;
 }
 
-void Camera::translateByAngle(float angleForYAxis, float angleForXAxis) {
-    Vector3f upVector(0., 1., 0.);
-    Vector3f cameraDirection = (cameraPosition - cameraTarget).normalized();
-    Vector3f cameraRight = (upVector.cross(cameraDirection).normalized());
-    Vector3f cameraUp = cameraDirection.cross(cameraRight);
+void Camera::translateByAngleOnYAxis(float angle) {
 
 
+    Vector3f cameraR = cameraPosition - cameraTarget;
+
+    float x = cameraR(0);
+    float y = cameraR(1);
+    float z = cameraR(2);
+
+    float currentAngle = atan(x/z);
+    float magnitude = sqrt((x*x) + (z*z));
+
+    float newAngle = currentAngle + angle;
+    float newX = magnitude * sin(newAngle);
+    float newZ = magnitude * cos(newAngle);
+
+//    cout<<"Angle: "<<newAngle*180/3.14<<"   X: "<<newX<<"    Z: "<<newZ<<endl;
+
+    cameraPosition = cameraTarget + Vector3f(newX, y, newZ);
+}
+
+void Camera::translateByAngleOnXAxis(float angle) {
+
+
+    Vector3f cameraR = cameraPosition - cameraTarget;
+
+    float x = cameraR(0);
+    float y = cameraR(1);
+    float z = cameraR(2);
+
+    float currentAngle = atan(y/z);
+    float magnitude = sqrt((y*y) + (z*z));
+
+    float newAngle = currentAngle + angle;
+    float newY = magnitude * sin(newAngle);
+    float newZ = magnitude * cos(newAngle);
+
+//    cout<<"Angle: "<<newAngle*180/3.14<<"   X: "<<newX<<"    Z: "<<newZ<<endl;
+
+    cameraPosition = cameraTarget + Vector3f(x, newY, newZ);
 }
 
 MatrixXf Camera::getView() {
