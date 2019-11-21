@@ -27,3 +27,11 @@ void World::setViewCamera(int cameraNumber) {
 Camera& World::getViewCamera() {
     return cameras.at(viewCamera);
 }
+
+void World::setSelectedMeshIndex(int meshIndex) {
+    this->selectedMeshIndex = meshIndex;
+}
+
+int World::getSelectedMeshIndex() {
+    return this->selectedMeshIndex;
+}

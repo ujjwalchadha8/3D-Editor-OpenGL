@@ -17,6 +17,8 @@ private:
     std::vector<std::reference_wrapper<Mesh>> meshes;
     std::vector<reference_wrapper<Camera>> cameras;
     int viewCamera = 0;
+    int selectedMeshIndex = -1;
+
 public:
     void addMesh(Mesh& mesh);
 
@@ -29,6 +31,10 @@ public:
     void setViewCamera(int cameraNumber);
 
     Camera& getViewCamera();
+
+    void setSelectedMeshIndex(int meshIndex);
+
+    int getSelectedMeshIndex();
 };
 
 

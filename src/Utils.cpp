@@ -72,6 +72,39 @@ Eigen::MatrixXf Utils::generateScaleAboutPointMatrix(const Eigen::Vector3f& poin
     return transform;
 }
 
+bool Utils::rayTriangleIntersect(const Eigen::Vector3f &rayOrigin, const Eigen::Vector3f &rayVector, const Eigen::Vector3f &vertex0,
+                                 const Eigen::Vector3f &vertex1, const Eigen::Vector3f &vertex2) {
+    const float EPSILON = 0.00001;
+
+    Eigen::Vector3f edge1, edge2, h, s, q;
+    float a,f,u,v;
+    edge1 = vertex1 - vertex0;
+    edge2 = vertex2 - vertex0;
+
+    h = rayVector.cross(edge2);
+    a = edge1.dot(h);
+    if (a > -EPSILON && a < EPSILON)
+        return false;    // This ray is parallel to this triangle.
+    f = 1.0/a;
+    s = rayOrigin - vertex0;
+    u = f * s.dot(h);
+    if (u < 0.0 || u > 1.0)
+        return false;
+    q = s.cross(edge1);
+    v = f * rayVector.dot(q);
+    if (v < 0.0 || u + v > 1.0)
+        return false;
+    // At this stage we can compute t to find out where the intersection point is on the line.
+    float t = f * edge2.dot(q);
+    if (t > EPSILON && t < 1/EPSILON) // ray intersection
+    {
+//        outIntersectionPoint = rayOrigin + rayVector * t;
+        return true;
+    }
+    else // This means that there is a line intersection but not a ray intersection.
+        return false;
+}
+
 Eigen::MatrixXf Utils::generateRotateAboutPointMatrix(int axis, float radians, const Eigen::Vector3f& center) {
 //    Eigen::MatrixXf transform(4, 4);
 //    if (axis == Utils::AXIS_Z){

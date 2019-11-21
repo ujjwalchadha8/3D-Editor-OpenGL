@@ -18,28 +18,41 @@ using namespace std;
 
 class Camera {
 private:
-    Vector3f eye;
-    Vector3f lookAt;
-//    MatrixXf view;
-    MatrixXf projection;
+    Vector3f cameraPosition;
+    Vector3f cameraTarget;
+
+    int projectionType = PROJECTION_ORTHOGRAPHIC;
+    float aspectRatio;
+    float near;
+    float far;
+    float fieldOfViewAngle;
 
 public:
-    static const int PROJECTION_ORTHOGRAPHIC = 0, PROJECTION_PRESPECTIVE = 1;
+    static const int PROJECTION_ORTHOGRAPHIC = 0, PROJECTION_PERSPECTIVE = 1;
 
-    Camera(int screenWidth, int screenHeight);
-    Camera(const Vector3f& eye, const Vector3f& lookAt, int screenWidth, int screenHeight);
+    Camera(const Vector3f& cameraPosition, const Vector3f& cameraTarget, int projectionType,
+            float aspectRatio, float near, float far, float fieldOfViewAngle);
+
+    Vector3f getCameraPosition();
+    Vector3f getCameraTarget();
+    int getProjectionType();
+    float getAspectRatio();
+    float getNear();
+    float getFar();
+    float getFieldOfViewAngle();
+
+    void setCameraPosition(const Vector3f& cameraPosition);
+    void setCameraTarget(const Vector3f& target);
+    void setProjectionType(const int projectionType);
+    void setAspectRatio(float aspectRatio);
+    void setNear(float near);
+    void setFar(float far);
+    void setFieldOfViewAngle(float fovAngle);
+
     MatrixXf getView();
-    Vector3f getEye();
-    Vector3f getLookAt();
     MatrixXf getProjection();
 
-    void translateBy(const Eigen::Vector3f& position); //translate
-//    void rotateAboutOrigin(int axis, float radians); //rotate
-//    void rotateAboutItself(int axis, float radians);
-//    void zoom(float factor); //scale
-    void setEye(const Vector3f& eye);
-    void setLookAt(const Vector3f& lookAt);
-
+    void translateBy(const Eigen::Vector3f& position);
 };
 
 

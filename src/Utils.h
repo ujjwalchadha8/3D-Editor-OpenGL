@@ -17,6 +17,9 @@ public:
     static Eigen::MatrixXf generateTranslationMatrix(const Eigen::Vector3f& translateBy);
     static Eigen::MatrixXf generateScaleAboutPointMatrix(const Eigen::Vector3f& point, float factor);
     static Eigen::MatrixXf generateRotateAboutPointMatrix(int axis, float radians, const Eigen::Vector3f& center);
+    static bool rayTriangleIntersect(
+            const Eigen::Vector3f &orig, const Eigen::Vector3f &dir,
+            const Eigen::Vector3f &v0, const Eigen::Vector3f &v1, const Eigen::Vector3f &v2);
 };
 
 enum RenderType {

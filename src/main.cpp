@@ -23,7 +23,6 @@
 #include <chrono>
 #include <iostream>
 
-// VertexBufferObject wrapper
 
 World world;
 
@@ -31,54 +30,104 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
-{
-    // Get the position of the mouse in the window
-    double xpos, ypos;
-    glfwGetCursorPos(window, &xpos, &ypos);
+Vector3f rayOrigin(0.0, 0.0, 0.0);
+Vector3f rayDirection(0.0, 0.0, 0.0);
 
+//vector<Mesh> meshes;
+Mesh meshes[100] = {Mesh()};
+int meshArrayTop = 0;
+
+Vector3f screenCoordsToWorldCoords(GLFWwindow* window, Vector3d screenCoords) {
     // Get the size of the window
     int width, height;
     glfwGetWindowSize(window, &width, &height);
 
-    // Convert screen position to world coordinates
-    double xworld = ((xpos/double(width))*2)-1;
-    double yworld = (((height-1-ypos)/double(height))*2)-1; // NOTE: y axis is flipped in glfw
+    double xpos = screenCoords(0);
+    double ypos = screenCoords(1);
+    double zpos = screenCoords(2);
 
-    // Update the position of the first vertex if the left button is pressed
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS){}
+    // Convert mouse position to world coordinates
+    Vector4f p_screen(xpos,height-1-ypos,zpos,1);
+    Vector4f p_canonical((p_screen[0]/width)*2-1,((p_screen[1]/height)*2)-1, zpos, 1);
+    Vector4f p_camera = world.getViewCamera().getProjection().inverse() * p_canonical;
+    Vector4f p_world = world.getViewCamera().getView().inverse() * p_camera;
 
+    return Vector3f(p_world(0), p_world(1), p_world(2));
 }
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    Mesh& mesh = world.getMeshes().at(0);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+
+    // Update the position of the first vertex if the left button is pressed
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS){
+        double xpos, ypos;
+        glfwGetCursorPos(window, &xpos, &ypos);
+        Vector3f worldPoint = screenCoordsToWorldCoords(window, Vector3d(xpos, ypos, 0.0));
+        Vector3f worldPoint2;
+        if (world.getViewCamera().getProjectionType() == Camera::PROJECTION_PERSPECTIVE) {
+            worldPoint2 = world.getViewCamera().getCameraPosition();
+        } else {
+            worldPoint2 = screenCoordsToWorldCoords(window, Vector3d(xpos, ypos, 1.0));
+        }
+
+        rayOrigin = worldPoint;
+        rayDirection = (worldPoint - worldPoint2).normalized();
+
+        int meshIntersected = -1;
+        for (int meshNo = 0; meshNo < world.getMeshes().size(); meshNo++) {
+            Mesh mesh = world.getMeshes().at(meshNo).get();
+            MatrixXf model = mesh.getModel();
+            MatrixXf triangles = mesh.getTriangleVertices();
+            for (long i = 0; i < triangles.cols(); i += 3) {
+                Vector4f a4 = model * Vector4f(triangles.col(i)(0), triangles.col(i)(1), triangles.col(i)(2), 1.0);
+                Vector4f b4 = model * Vector4f(triangles.col(i+1)(0), triangles.col(i+1)(1), triangles.col(i+1)(2), 1.0);
+                Vector4f c4 = model * Vector4f(triangles.col(i+2)(0), triangles.col(i+2)(1), triangles.col(i+2)(2), 1.0);
+
+                Vector3f a = Vector3f(a4(0), a4(1), a4(2));
+                Vector3f b = Vector3f(b4(0), b4(1), b4(2));
+                Vector3f c = Vector3f(c4(0), c4(1), c4(2));
+
+                if (Utils::rayTriangleIntersect(rayOrigin, rayDirection, a, b, c)) {
+                    meshIntersected = meshNo;
+                    break;
+                }
+            }
+        }
+        cout << meshIntersected << endl;
+        world.setSelectedMeshIndex(meshIntersected);
+    }
+}
+
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     Camera& camera = world.getViewCamera();
-    switch (key)
-    {
-        case  GLFW_KEY_1:
-            if (action == GLFW_PRESS) mesh.scale(2);
+    switch (key) {
+        case GLFW_KEY_1:
+            if (action == GLFW_PRESS) {
+                meshes[meshArrayTop] = Mesh::fromOffFile("../data/unit_cube.off", Vector3f(1.0, 1.0, 0.0), FLAT_SHADE);
+                meshes[meshArrayTop].scaleToUnitCube();
+                meshes[meshArrayTop].translate(Vector3f(0.0, 0.0, 0.0));
+                world.addMesh(meshes[meshArrayTop]);
+                meshArrayTop++;
+            }
             break;
         case GLFW_KEY_2:
-            mesh.rotate(Utils::AXIS_Z, 0.1);
+            if (action == GLFW_PRESS) {
+                meshes[meshArrayTop] = Mesh::fromOffFile("../data/bunny.off", Vector3f(0.0, 1.0, 0.0), FLAT_SHADE);
+                meshes[meshArrayTop].scaleToUnitCube();
+                meshes[meshArrayTop].translate(Vector3f(0.0, 0.0, 0.0));
+                world.addMesh(meshes[meshArrayTop]);
+                meshArrayTop++;
+            }
             break;
-        case  GLFW_KEY_3:
-            mesh.rotate(Utils::AXIS_X, 0.1);
+        case GLFW_KEY_3:
+            if (action == GLFW_PRESS) {
+                meshes[meshArrayTop] = Mesh::fromOffFile("../data/bumpy_cube.off", Vector3f(1.0, 0.0, 0.0), WIREFRAME);
+                meshes[meshArrayTop].scaleToUnitCube();
+                meshes[meshArrayTop].translate(Vector3f(0.0, 0.0, 0.0));
+                world.addMesh(meshes[meshArrayTop]);
+                meshArrayTop++;
+            }
             break;
-        case  GLFW_KEY_Q:
-            if (action == GLFW_PRESS) mesh.translate(Vector3f(0.2, 0, 0.0));
-            break;
-        case  GLFW_KEY_W:
-            if (action == GLFW_PRESS) mesh.scale(0.8);
-            break;
-
-        case  GLFW_KEY_P:
-            camera.translateBy(Vector3f(0.0, 0.0, -0.5));
-            break;
-        case  GLFW_KEY_L:
-            camera.translateBy(Vector3f(0.0, 0.0, 0.5));
-            break;
-
         case GLFW_KEY_UP:
             camera.translateBy(Vector3f(0.0, 0.5, 0.));
             break;
@@ -97,10 +146,167 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         case GLFW_KEY_SLASH:
             camera.translateBy(Vector3f(0.0, 0.0, 0.1));
             break;
+
+        case GLFW_KEY_TAB:
+            if (action == GLFW_PRESS) {
+                if (world.getViewCamera().getProjectionType() == Camera::PROJECTION_ORTHOGRAPHIC) {
+                    world.getViewCamera().setProjectionType(Camera::PROJECTION_PERSPECTIVE);
+                    world.getViewCamera().setFieldOfViewAngle((3.14/180) * 90);
+                } else {
+                    world.getViewCamera().setProjectionType(Camera::PROJECTION_ORTHOGRAPHIC);
+                    world.getViewCamera().setFieldOfViewAngle((3.14/180) * 140);
+                }
+            }
+            break;
+        case GLFW_KEY_LEFT_SHIFT:
+            if (action == GLFW_PRESS) {
+                if (world.getSelectedMeshIndex() == -1) return;
+                Mesh& mesh = world.getMeshes().at(world.getSelectedMeshIndex()).get();
+                if (mesh.getRenderType() == PHONG_SHADE) mesh.setRenderType(WIREFRAME);
+                else if (mesh.getRenderType() == WIREFRAME) mesh.setRenderType(FLAT_SHADE);
+                else if (mesh.getRenderType() == FLAT_SHADE) mesh.setRenderType(PHONG_SHADE);
+            }
+            break;
+        case  GLFW_KEY_A:
+            if (action == GLFW_PRESS) {
+                if (world.getSelectedMeshIndex() == -1) return;
+                world.getMeshes().at(world.getSelectedMeshIndex()).get().translate(Vector3f(-0.1, 0, 0.0));
+            }
+            break;
+        case  GLFW_KEY_D:
+            if (action == GLFW_PRESS) {
+                if (world.getSelectedMeshIndex() == -1) return;
+                world.getMeshes().at(world.getSelectedMeshIndex()).get().translate(Vector3f(0.1, 0, 0.0));
+            }
+            break;
+        case  GLFW_KEY_W:
+            if (action == GLFW_PRESS) {
+                if (world.getSelectedMeshIndex() == -1) return;
+                world.getMeshes().at(world.getSelectedMeshIndex()).get().translate(Vector3f(0.0, 0.0, -0.1));
+            }
+            break;
+        case  GLFW_KEY_S:
+            if (action == GLFW_PRESS) {
+                if (world.getSelectedMeshIndex() == -1) return;
+                world.getMeshes().at(world.getSelectedMeshIndex()).get().translate(Vector3f(0.0, 0, 0.1));
+            }
+            break;
+        case  GLFW_KEY_Q:
+            if (action == GLFW_PRESS) {
+                if (world.getSelectedMeshIndex() == -1) return;
+                world.getMeshes().at(world.getSelectedMeshIndex()).get().translate(Vector3f(0.0, 0.1, 0.0));
+            }
+            break;
+        case  GLFW_KEY_Z:
+            if (action == GLFW_PRESS) {
+                if (world.getSelectedMeshIndex() == -1) return;
+                world.getMeshes().at(world.getSelectedMeshIndex()).get().translate(Vector3f(0.0, -0.1, 0.0));
+            }
+            break;
+        case  GLFW_KEY_E:
+            if (action == GLFW_PRESS) {
+                if (world.getSelectedMeshIndex() == -1) return;
+                world.getMeshes().at(world.getSelectedMeshIndex()).get().rotate(Utils::AXIS_Z, -0.1);
+            }
+            break;
+        case  GLFW_KEY_R:
+            if (action == GLFW_PRESS) {
+                if (world.getSelectedMeshIndex() == -1) return;
+                world.getMeshes().at(world.getSelectedMeshIndex()).get().rotate(Utils::AXIS_Z, 0.1);
+            }
+            break;
+        case  GLFW_KEY_F:
+            if (action == GLFW_PRESS) {
+                if (world.getSelectedMeshIndex() == -1) return;
+                world.getMeshes().at(world.getSelectedMeshIndex()).get().rotate(Utils::AXIS_X, -0.1);
+            }
+            break;
+        case  GLFW_KEY_G:
+            if (action == GLFW_PRESS) {
+                if (world.getSelectedMeshIndex() == -1) return;
+                world.getMeshes().at(world.getSelectedMeshIndex()).get().rotate(Utils::AXIS_X, 0.1);
+            }
+            break;
+        case  GLFW_KEY_C:
+            if (action == GLFW_PRESS) {
+                if (world.getSelectedMeshIndex() == -1) return;
+                world.getMeshes().at(world.getSelectedMeshIndex()).get().rotate(Utils::AXIS_Y, -0.1);
+            }
+            break;
+        case  GLFW_KEY_V:
+            if (action == GLFW_PRESS) {
+                if (world.getSelectedMeshIndex() == -1) return;
+                world.getMeshes().at(world.getSelectedMeshIndex()).get().rotate(Utils::AXIS_Y, 0.1);
+            }
+            break;
+    }
+}
+
+
+void key_callback2(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    Mesh& selectedMesh = world.getMeshes().at(world.getSelectedMeshIndex());
+    Camera& camera = world.getViewCamera();
+    switch (key)
+    {
+        case GLFW_KEY_1:
+            if (action == GLFW_PRESS) {
+                Mesh unitCube = Mesh::fromOffFile("../data/unit_cube.off", Vector3f(1., 1., 0.), FLAT_SHADE);
+                cout<<"Adding"<<endl;
+                world.addMesh(unitCube);
+                cout<<"Adding"<<endl;
+                unitCube.scaleToUnitCube();
+                cout<<"Adding"<<endl;
+                break;
+            }
+        case GLFW_KEY_2:
+            if (action == GLFW_PRESS) {
+                Mesh unitCube = Mesh::fromOffFile("../data/bumpy_cube.off", Vector3f(1., 1., 0.), FLAT_SHADE);
+                world.addMesh(unitCube);
+                unitCube.scaleToUnitCube();
+                break;
+            }
+        case GLFW_KEY_3:
+            if (action == GLFW_PRESS) {
+                Mesh unitCube = Mesh::fromOffFile("../data/bunny.off", Vector3f(1., 1., 0.), FLAT_SHADE);
+                world.addMesh(unitCube);
+                unitCube.scaleToUnitCube();
+                break;
+            }
+
+        case  GLFW_KEY_A:
+            if (action == GLFW_PRESS) selectedMesh.scale(2);
+            break;
+        case GLFW_KEY_4:
+            selectedMesh.rotate(Utils::AXIS_Z, 0.1);
+            break;
+        case  GLFW_KEY_5:
+            selectedMesh.rotate(Utils::AXIS_X, 0.1);
+            break;
+        case  GLFW_KEY_Q:
+            if (action == GLFW_PRESS) selectedMesh.translate(Vector3f(0.2, 0, 0.0));
+            break;
+        case  GLFW_KEY_W:
+            if (action == GLFW_PRESS) selectedMesh.scale(0.8);
+            break;
+
+        case  GLFW_KEY_P:
+            camera.translateBy(Vector3f(0.0, 0.0, -0.5));
+            break;
+        case  GLFW_KEY_L:
+            camera.translateBy(Vector3f(0.0, 0.0, 0.5));
+            break;
+
+
+
         default:
             break;
     }
 //    std::cout<<world.getViewCamera().getView()<<std::endl;
+}
+
+void window_size_callback(GLFWwindow* window, int width, int height) {
+    float aspect = width / height;
+    world.getViewCamera().setAspectRatio(aspect);
 }
 
 GLenum getPolygonDrawType(RenderType renderType) {
@@ -110,11 +316,13 @@ GLenum getPolygonDrawType(RenderType renderType) {
         case FLAT_SHADE:
             return GL_FILL;
         case PHONG_SHADE:
-            throw runtime_error("Unsupported type");
+            return GL_FILL;
         default:
             throw runtime_error("Unsupported type");
     }
 }
+
+Mesh bunnyMesh2 = Mesh::fromOffFile("../data/unit_cube.off", Vector3f(1., 1., 0.), FLAT_SHADE);
 
 int main()
 {
@@ -191,11 +399,8 @@ int main()
             "void main()"
             "{"
             "    vec3 lightColor = vec3(1.0, 1.0, 1.0);"
-            // Ambient
             "      float ambientStrength = 0.01f;"
             "      vec3 ambient = ambientStrength * lightColor;"
-
-            // Diffuse
             "      vec3 norm = normalize(Normal);"
             "      vec3 lightDir = normalize(lightPos - FragPos);"
             "      float diff = max(dot(norm, lightDir), 0.0);"
@@ -204,7 +409,6 @@ int main()
             "         vec3 result = (ambient + diffuse) * objectColor;"
             "         outColor = vec4(result, 1.0);"
             "       }else{"
-            // Specular
             "         float specularStrength = 0.5f;"
             "         vec3 viewDir = normalize(viewPos - FragPos);"
             "         vec3 reflectDir = reflect(-lightDir, norm);  "
@@ -240,26 +444,33 @@ int main()
     // Update viewport
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+    glfwSetWindowSizeCallback(window, window_size_callback);
 
 //    Mesh bumpyMesh = Mesh::fromOffFile("../data/bumpy_cube.off", Vector3f(1.0, 0.0, 0.0), FLAT_SHADE);
 //    world.addMesh(bumpyMesh);
 ////    bumpyMesh.scale(0.1);
 //    bumpyMesh.scaleToUnitCube();
 //    bumpyMesh.translate(Eigen::Vector3f(0.0, 0.0, -1));
-
+//
 //    Mesh bunnyMesh = Mesh::fromOffFile("../data/bunny.off", Vector3f(0.0, 1.0, 0.0), FLAT_SHADE);
 //    bunnyMesh.scaleToUnitCube();
+//    bunnyMesh.translate(Vector3f(2.0, 2.0, 0.0));
 //    world.addMesh(bunnyMesh);
+//
+//    Mesh unitCube = Mesh::fromOffFile("../data/unit_cube.off", Vector3f(1., 1., 0.), FLAT_SHADE);
+//    world.addMesh(unitCube);
+//    unitCube.scaleToUnitCube();
+//    unitCube.translate(Eigen::Vector3f(0.0, 0.0, 0.0));
 
-    Mesh unitCube = Mesh::fromOffFile("../data/unit_cube.off", Vector3f(1., 1., 0.), FLAT_SHADE);
-    world.addMesh(unitCube);
-//    unitCube.scale(1);
-    unitCube.scaleToUnitCube();
-    unitCube.translate(Eigen::Vector3f(0.0, 0.0, 0.0));
+//    Mesh bunnyMesh = Mesh::fromOffFile("../data/triangle.off", Vector3f(0.0, 1.0, 0.0), FLAT_SHADE);
+//    bunnyMesh.scaleToUnitCube();
+//    bunnyMesh.translate(Vector3f(2.0, 2.0, 0.0));
+//    world.addMesh(bunnyMesh);
 
     int screenWidth, screenHeight;
     glfwGetWindowSize(window, &screenWidth, &screenHeight);
-    Camera camera(screenWidth, screenHeight);
+    Camera camera(Vector3f(0., 0., 3.), Vector3f(0., 0., 0.),
+            Camera::PROJECTION_PERSPECTIVE, screenWidth/screenHeight, -0.5, -100.0, (3.14/180) * 90);
     world.addCamera(camera);
 
     // Loop until the user closes the window
@@ -269,7 +480,6 @@ int main()
 
         // Bind your program
         program.bind();
-
 
         // Set the uniform value depending on the time difference
         auto t_now = std::chrono::high_resolution_clock::now();
@@ -282,32 +492,45 @@ int main()
         glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-//        glClear(GL_COLOR_BUFFER_BIT);
-
         //Set the camera view
         glUniformMatrix4fv(program.uniform("view"), 1, GL_FALSE, world.getViewCamera().getView().data());
         glUniformMatrix4fv(program.uniform("projection"), 1, GL_FALSE, world.getViewCamera().getProjection().data());
         // Draw each mesh
-        for (Mesh mesh: world.getMeshes()) {
+        for (int meshIndex = 0; meshIndex < world.getMeshes().size(); meshIndex++) {
+            Mesh mesh = world.getMeshes().at(meshIndex).get();
             VBO_Positions.update(mesh.getTriangleVertices());
             VBO_VertexNormals.update(mesh.getVertexNormals());
             VBO_FaceNormals.update(mesh.getFaceNormals());
 
             glUniformMatrix4fv(program.uniform("model"), 1, GL_FALSE, mesh.getModel().data());
             glPolygonMode(GL_FRONT_AND_BACK, getPolygonDrawType(mesh.getRenderType()));
-            glUniform3f(program.uniform("color"), mesh.getColor()(0), mesh.getColor()(1), mesh.getColor()(2));
-            glUniform1i(program.uniform("flat_normal"), false);
+            if (world.getSelectedMeshIndex() == meshIndex) {
+                glUniform3f(program.uniform("color"), 0.0, 0.0, 1.0);
+            } else {
+                glUniform3f(program.uniform("color"), mesh.getColor()(0), mesh.getColor()(1), mesh.getColor()(2));
+            }
+            glUniform1i(program.uniform("flat_normal"), mesh.getRenderType() != PHONG_SHADE);
             glUniform3f(program.uniform("lightPos"), -5.0, 0.0, 10.0);
-            glUniform3f(program.uniform("viewPos"), camera.getEye()(0), camera.getEye()(1), camera.getEye()(2));
+            glUniform3f(program.uniform("viewPos"), camera.getCameraPosition()(0), camera.getCameraPosition()(1),
+                        camera.getCameraPosition()(2));
 
             glDrawArrays(GL_TRIANGLES, 0, mesh.getFaces().cols() * mesh.getFaces().rows());
 
-
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glUniform3f(program.uniform("color"), 0.0, 0.0, 0.0);
-            glDrawArrays(GL_TRIANGLES, 0, mesh.getFaces().cols() * mesh.getFaces().rows());
-
+            if (mesh.getRenderType() == FLAT_SHADE) {
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                glUniform3f(program.uniform("color"), 0.0, 0.0, 0.0);
+                glDrawArrays(GL_TRIANGLES, 0, mesh.getFaces().cols() * mesh.getFaces().rows());
+            }
         }
+
+//        MatrixXf identityModel = MatrixXf::Identity(4, 4);
+//        glUniformMatrix4fv(program.uniform("model"), 1, GL_FALSE, identityModel.data());
+//        MatrixXf line(3, 2);
+//        line << rayOrigin(0), (rayOrigin + (100 * rayDirection))(0),
+//                rayOrigin(1), (rayOrigin + (100 * rayDirection))(1),
+//                rayOrigin(2), (rayOrigin + (100 * rayDirection))(2);
+//        VBO_Positions.update(line);
+//        glDrawArrays(GL_LINE_STRIP, 0, 2);
 
         // Swap front and back buffers
         glfwSwapBuffers(window);

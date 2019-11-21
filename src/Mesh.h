@@ -30,6 +30,7 @@ private:
     static Vector3f calculateBarycenter(const MatrixXf& faces, const MatrixXf& vertices);
 
 public:
+    Mesh();
     Mesh(const MatrixXf& vertices, const MatrixXf& faces, const Vector3f& color, const RenderType& renderType);
     Mesh(const MatrixXf& vertices, const MatrixXf& faces);
     ~Mesh();
@@ -55,6 +56,7 @@ public:
 
     void setRenderType(const RenderType& renderType);
     void setColor(const Vector3f& color);
+    float getMaxDistanceFromCenter();
 };
 
 

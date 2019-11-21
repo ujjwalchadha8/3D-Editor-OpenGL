@@ -14,6 +14,10 @@
 using namespace std;
 using namespace Eigen;
 
+Mesh::Mesh() {
+
+}
+
 Mesh::Mesh(const MatrixXf& vertices, const MatrixXf& faces):
         Mesh(vertices, faces, Eigen::Vector3f(0.0, 1.1, 2.2), WIREFRAME) {
 }
@@ -151,7 +155,7 @@ MatrixXf Mesh::calculateVertexNormals(const MatrixXf& faces, const MatrixXf& ver
     return normals;
 }
 
-void Mesh::scaleToUnitCube() {
+float Mesh::getMaxDistanceFromCenter() {
     float xmax = -999999, xmin = 99999;
     float ymax = -999999, ymin = 99999;
     float zmax = -999999, zmin = 99999;
@@ -176,7 +180,11 @@ void Mesh::scaleToUnitCube() {
             zmax = vertex(2);
         }
     }
-    scale(1 / max(max(xmax-xmin, ymax-ymin), zmax-zmin));
+    return max(max(xmax-xmin, ymax-ymin), zmax-zmin);
+}
+
+void Mesh::scaleToUnitCube() {
+    scale(1 / getMaxDistanceFromCenter());
 }
 
 RenderType Mesh::getRenderType() {
